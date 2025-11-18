@@ -43,4 +43,3 @@ fi
 # 运行抓取 + 同步 Outlook 日历的脚本
 echo "运行 hku_seminars_to_outlook.py ..."
 exec python hku_seminars_to_outlook.py "$@"
-

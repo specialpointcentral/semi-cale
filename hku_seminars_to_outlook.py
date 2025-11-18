@@ -1,5 +1,7 @@
+import os
 import sys
 from datetime import datetime, timedelta
+from urllib.parse import urljoin
 
 try:
     # Python 3.9+
@@ -11,24 +13,14 @@ except ImportError as exc:  # pragma: no cover - fallback message
 
 import requests
 from bs4 import BeautifulSoup
-import msal
+
+from email_notifier import SeminarEmailNotifier
 
 
 HK_TZ = ZoneInfo("Asia/Hong_Kong")
 
 HKU_SEMINAR_URL = "https://www.cs.hku.hk/programmes/research-based/mphil-phd-courses-offered"
 SUBJECT_PREFIX = "[HKU CS Seminar] "
-
-# Azure AD 应用的 Client ID（在 Azure Portal App registrations 里看到）
-# 一定要改成你自己的 App 的 client_id
-CLIENT_ID = "YOUR_CLIENT_ID_HERE"
-
-# 一般设置为 common 就可以支持个人/企业账号，
-# 如果你有固定 tenant 也可以改成对应 tenant id
-AUTHORITY = "https://login.microsoftonline.com/common"
-SCOPES = ["offline_access", "Calendars.ReadWrite"]
-
-GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 
 
 def parse_datetime_range(date_str: str, time_range_str: str):
@@ -70,36 +62,6 @@ def parse_datetime_range(date_str: str, time_range_str: str):
     start_dt = datetime.combine(date, start_time).replace(tzinfo=HK_TZ)
     end_dt = datetime.combine(date, end_time).replace(tzinfo=HK_TZ)
     return start_dt, end_dt
-
-
-def acquire_token():
-    """
-    通过 device code 登录获取 Graph access token。
-    第一次运行会让你在浏览器里登录，以后可复用缓存（这里用的是内存缓存，每次启动需要再登录一次）。
-    """
-    app = msal.PublicClientApplication(CLIENT_ID, authority=AUTHORITY)
-    accounts = app.get_accounts()
-    result = None
-
-    if accounts:
-        result = app.acquire_token_silent(SCOPES, account=accounts[0])
-
-    if not result:
-        flow = app.initiate_device_flow(scopes=SCOPES)
-        if "user_code" not in flow:
-            raise RuntimeError(
-                "Failed to create device flow. Check your CLIENT_ID and network."
-            )
-        print(flow["message"])
-        sys.stdout.flush()
-        result = app.acquire_token_by_device_flow(flow)
-
-    if "access_token" not in result:
-        raise RuntimeError(
-            f"Token acquisition failed: {result.get('error_description', result)}"
-        )
-
-    return result["access_token"]
 
 
 def fetch_seminars():
@@ -146,7 +108,13 @@ def fetch_seminars():
             continue
 
         # Title（可能包在 <a> 里）
+        title_link = tds[0].find("a", href=True)
         title = tds[0].get_text(strip=True)
+        link = (
+            urljoin(HKU_SEMINAR_URL, title_link["href"])
+            if title_link and title_link["href"]
+            else None
+        )
         # Speaker
         speaker = tds[1].get_text(strip=True)
 
@@ -169,185 +137,49 @@ def fetch_seminars():
                 "start": start_dt,
                 "end": end_dt,
                 "venue": venue,
+                "link": link,
             }
         )
 
     return seminars
 
 
-def get_calendar_events_in_range(token, start_dt, end_dt):
-    """
-    从 Outlook 默认日历获取指定时间范围内的所有事件。
-    使用 /me/calendar/calendarView 接口。
-    """
-    headers = {"Authorization": f"Bearer {token}"}
-
-    # Graph 要求 start/end 用 ISO8601，推荐用 UTC
-    start_utc = start_dt.astimezone(ZoneInfo("UTC")).isoformat()
-    end_utc = end_dt.astimezone(ZoneInfo("UTC")).isoformat()
-
-    params = {
-        "startDateTime": start_utc,
-        "endDateTime": end_utc,
-        "$top": "1000",
-    }
-
-    events = []
-    url = f"{GRAPH_BASE}/me/calendar/calendarView"
-
-    while True:
-        resp = requests.get(url, headers=headers, params=params)
-        resp.raise_for_status()
-        data = resp.json()
-        events.extend(data.get("value", []))
-
-        next_link = data.get("@odata.nextLink")
-        if not next_link:
-            break
-        # nextLink 里已经包含了所有 query 参数，所以后续请求不需要再传 params
-        url = next_link
-        params = None
-
-    return events
+def print_seminar_overview(seminars):
+    print("Seminar list:")
+    for s in seminars:
+        start_str = s["start"].strftime("%Y-%m-%d %H:%M")
+        end_str = s["end"].strftime("%H:%M")
+        print(
+            f" - {s['title']} | {s['speaker']} | "
+            f"{start_str}-{end_str} ({HK_TZ.key}) | {s['venue']}"
+        )
+    print(f"Total {len(seminars)} seminar(s).\n")
 
 
-def parse_graph_datetime(dt_str: str):
-    """
-    把 Graph 返回的 dateTime 字符串解析成带 Asia/Hong_Kong 时区的 datetime。
-    这里假设我们创建时就是香港时间，本地比较也统一按香港时间。
-    """
-    if not dt_str:
-        return None
-
-    # 可能是 "2025-11-21T10:30:00.0000000" 或 "2025-11-21T10:30:00.0000000Z"
-    s = dt_str.replace("Z", "")
-    dt = datetime.fromisoformat(s)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=HK_TZ)
-    else:
-        dt = dt.astimezone(HK_TZ)
-    return dt
-
-
-def build_existing_event_index(events):
-    """
-    从一批 events 中筛选出我们脚本创建的 seminars（subject 有前缀），
-    返回:
-      index: {(subject, start_truncated): event}
-      seminar_events: [event, ...]  # 仅我们的 events
-    """
-    index = {}
-    seminar_events = []
-
-    for e in events:
-        subject = e.get("subject", "") or ""
-        if not subject.startswith(SUBJECT_PREFIX):
-            continue
-
-        start_info = e.get("start", {})
-        start_dt = parse_graph_datetime(start_info.get("dateTime"))
-        if not start_dt:
-            continue
-
-        key = (subject, start_dt.replace(second=0, microsecond=0))
-        index[key] = e
-        seminar_events.append(e)
-
-    return index, seminar_events
-
-
-def create_event(token, seminar):
-    """
-    创建单个 seminar 的 Outlook 事件。
-    """
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
-
-    subject = f"{SUBJECT_PREFIX}{seminar['title']} — {seminar['speaker']}"
-
-    body_html = (
-        f"<p><strong>{seminar['title']}</strong></p>"
-        f"<p>Speaker: {seminar['speaker']}</p>"
-        f"<p>Venue: {seminar['venue']}</p>"
-        f"<p>Source: <a href='{HKU_SEMINAR_URL}'>{HKU_SEMINAR_URL}</a></p>"
-    )
-
-    payload = {
-        "subject": subject,
-        "body": {"contentType": "HTML", "content": body_html},
-        "start": {
-            "dateTime": seminar["start"].isoformat(),
-            "timeZone": "Asia/Hong_Kong",
-        },
-        "end": {
-            "dateTime": seminar["end"].isoformat(),
-            "timeZone": "Asia/Hong_Kong",
-        },
-        "location": {"displayName": seminar["venue"]},
-    }
-
-    resp = requests.post(f"{GRAPH_BASE}/me/events", headers=headers, json=payload)
-    resp.raise_for_status()
-    return resp.json()
-
-
-def delete_event(token, event_id: str):
-    headers = {"Authorization": f"Bearer {token}"}
-    url = f"{GRAPH_BASE}/me/events/{event_id}"
-    resp = requests.delete(url, headers=headers)
-    # Graph 对已删除 / 不存在的 event 可能返回 204 或 404，
-    # 这里简单忽略 404 错误
-    if resp.status_code not in (204, 404):
-        resp.raise_for_status()
-
-
-def sync_seminars_to_outlook():
-    # 1. 抓取网页上的所有 seminar
+def sync_seminars_via_email():
     seminars = fetch_seminars()
     if not seminars:
         print("No seminars found on the page.")
         return
 
-    print(f"Found {len(seminars)} seminars on HKU page.")
-
-    # 2. 获取 Graph token
-    token = acquire_token()
-
-    # 3. 获取一个稍微宽一点的时间范围内的已有事件
-    earliest = min(s["start"] for s in seminars) - timedelta(days=7)
-    latest = max(s["end"] for s in seminars) + timedelta(days=7)
-
-    events = get_calendar_events_in_range(token, earliest, latest)
-    existing_index, seminar_events = build_existing_event_index(events)
-
-    # 4. 去重后创建新的事件
-    created = 0
-    for s in seminars:
-        subject = f"{SUBJECT_PREFIX}{s['title']} — {s['speaker']}"
-        key = (subject, s["start"].replace(second=0, microsecond=0))
-
-        if key in existing_index:
-            # 已经存在，不重复创建
-            continue
-
-        create_event(token, s)
-        created += 1
-
-    # 5. 删除过期的 seminar 事件（只删我们自己创建的）
     now_hk = datetime.now(HK_TZ)
-    deleted = 0
-    for e in seminar_events:
-        end_info = e.get("end", {})
-        end_dt = parse_graph_datetime(end_info.get("dateTime"))
-        if end_dt and end_dt < now_hk:
-            delete_event(token, e["id"])
-            deleted += 1
+    upcoming = [s for s in seminars if s["end"] >= now_hk]
+    if not upcoming:
+        print("No upcoming seminars found.")
+        return
 
-    print(f"Created {created} new events, deleted {deleted} expired events.")
+    print(f"Found {len(seminars)} seminars on HKU page, {len(upcoming)} upcoming.")
+    print_seminar_overview(upcoming)
+
+    notifier = SeminarEmailNotifier.from_config_file(
+        os.environ.get("HKU_CONFIG_PATH", "config.json"),
+        tz=HK_TZ,
+        source_url=HKU_SEMINAR_URL,
+        subject_prefix=SUBJECT_PREFIX,
+    )
+    new_count = notifier.send_new_invites(upcoming)
+    print(f"Completed. Sent {new_count} new invitation(s).")
 
 
 if __name__ == "__main__":
-    sync_seminars_to_outlook()
-
+    sync_seminars_via_email()

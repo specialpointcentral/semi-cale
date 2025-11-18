@@ -1,0 +1,12 @@
+{
+  "smtp_host": "smtp.example.com",
+  "smtp_port": 587,
+  "smtp_ssl": false,
+  "smtp_starttls": true,
+  "smtp_user": "example@example.com",
+  "smtp_password": "CHANGE_ME",
+  "from_email": "example@example.com",
+  "to_emails": ["recipient@example.com"],
+  "state_file": "sent_seminars.json",
+  "email_subject": ""
+}

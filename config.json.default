@@ -5,8 +5,9 @@
   "smtp_starttls": true,
   "smtp_user": "example@example.com",
   "smtp_password": "CHANGE_ME",
-  "from_email": "example@example.com",
-  "to_emails": ["recipient@example.com"],
+  "sender_email": "Example Sender Name <example@example.com>",
+  "from_email": "Sender <example@example.com>",
+  "to_emails": ["Name <recipient@example.com>"],
   "state_file": "sent_seminars.json",
   "email_subject": ""
 }

@@ -3,6 +3,7 @@ import os
 import smtplib
 from datetime import datetime, timezone
 from email.message import EmailMessage
+from email.utils import parseaddr, formataddr
 
 
 class SeminarEmailNotifier:
@@ -12,6 +13,7 @@ class SeminarEmailNotifier:
         smtp_host: str,
         smtp_port: int,
         smtp_user: str,
+        sender_email: str,
         smtp_password: str,
         from_email: str,
         to_emails: list[str],
@@ -26,6 +28,7 @@ class SeminarEmailNotifier:
         self.smtp_host = smtp_host
         self.smtp_port = smtp_port
         self.smtp_user = smtp_user
+        self.sender_email = sender_email or ""
         self.smtp_password = smtp_password
         self.from_email = from_email or smtp_user
         self.to_emails = to_emails
@@ -51,6 +54,7 @@ class SeminarEmailNotifier:
             smtp_host=cfg.get("smtp_host", ""),
             smtp_port=int(cfg.get("smtp_port", 587)),
             smtp_user=cfg.get("smtp_user", ""),
+            sender_email=cfg.get("sender_email", ""),
             smtp_password=cfg.get("smtp_password", ""),
             from_email=cfg.get("from_email", ""),
             to_emails=to_emails,
@@ -125,6 +129,15 @@ class SeminarEmailNotifier:
         dtstart = self._format_ics_datetime(seminar["start"])
         dtend = self._format_ics_datetime(seminar["end"])
         subject = f"{self.subject_prefix}{seminar['title']} — {seminar['speaker']}"
+
+        # Parse organizer (may be in "Name <email>" format)
+        org_name, org_email = parseaddr(self.from_email)
+        organizer_email = org_email or self.from_email
+        organizer_param = ""
+        if org_name:
+            safe_name = org_name.replace('"', '\\"')
+            organizer_param = f';CN="{safe_name}"'
+
         description = (
             f"Speaker: {seminar['speaker']}\\n"
             f"Venue: {seminar['venue']}\\n"
@@ -150,13 +163,24 @@ class SeminarEmailNotifier:
             f"DTEND:{dtend}",
             f"LOCATION:{seminar['venue']}",
             f"DESCRIPTION:{description}",
-            f"ORGANIZER;CN={self.from_email}:MAILTO:{self.from_email}",
         ]
+        lines.append(f"ORGANIZER{organizer_param}:MAILTO:{organizer_email}")
+
+        # Add attendees, supporting "Name <email>" format
         for attendee in self.to_emails:
-            lines.append(
-                "ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;"
-                f"ROLE=REQ-PARTICIPANT:MAILTO:{attendee}"
+            att_name, att_email = parseaddr(attendee)
+            if not att_email:
+                continue
+            params = []
+            if att_name:
+                safe_name = att_name.replace('"', '\\"')
+                params.append(f'CN="{safe_name}"')
+            params.extend(
+                ["RSVP=TRUE", "PARTSTAT=NEEDS-ACTION", "ROLE=REQ-PARTICIPANT"]
             )
+            param_str = ";".join(params)
+            lines.append(f"ATTENDEE;{param_str}:MAILTO:{att_email}")
+
         lines.extend(["PRIORITY:5", "CLASS:PUBLIC", "END:VEVENT", "END:VCALENDAR", ""])
         return "\r\n".join(lines)
 
@@ -167,8 +191,29 @@ class SeminarEmailNotifier:
         )
         msg = EmailMessage()
         msg["Subject"] = self.subject_override or per_event_subject
-        msg["From"] = self.from_email
-        msg["To"] = ", ".join(self.to_emails)
+
+        # Properly format From/To headers so names like "Name <email>" display correctly
+        from_name, from_email = parseaddr(self.from_email)
+        if from_email:
+            msg["From"] = formataddr((from_name, from_email))
+        else:
+            msg["From"] = self.from_email
+
+        formatted_recipients = []
+        for recipient in self.to_emails:
+            name, email = parseaddr(recipient)
+            if email:
+                formatted_recipients.append(formataddr((name, email)))
+        if formatted_recipients:
+            msg["To"] = ", ".join(formatted_recipients)
+        else:
+            msg["To"] = ", ".join(self.to_emails)
+
+        # Sender header (real sending account, for "on behalf of" display)
+        sender_source = self.sender_email or self.smtp_user or self.from_email
+        sender_name, sender_email = parseaddr(sender_source)
+        if sender_email:
+            msg["Sender"] = formataddr((sender_name, sender_email))
 
         body = (
             f"{seminar['title']} — {seminar['speaker']}\n"

@@ -22,7 +22,8 @@ This script scrapes the HKU CS research programme seminar table and sends Outloo
 
 - `smtp_host`, `smtp_port`, `smtp_ssl`, `smtp_starttls`: SMTP connection settings.
 - `smtp_user`, `smtp_password`: SMTP credentials (password can be an app password).
-- `from_email`: Sender address (defaults to `smtp_user` if left blank).
+- `sender_email`: Optional `Sender` header value, e.g. `"HKU CS Seminar Bot <example@example.com>"`. If omitted, falls back to `smtp_user`.
+- `from_email`: Logical organizer / From address (defaults to `smtp_user` if left blank). Supports `"Name <email>"` format.
 - `to_emails`: Recipients list (array or comma-separated string).
 - `email_subject`: Optional fixed subject; defaults to “[HKU CS Seminar] …”.
 - `state_file`: Path to the JSON file used to remember which seminars have been emailed.

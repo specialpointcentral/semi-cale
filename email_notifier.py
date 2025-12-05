@@ -192,18 +192,11 @@ class SeminarEmailNotifier:
         msg = EmailMessage()
         msg["Subject"] = self.subject_override or per_event_subject
 
-        # Properly format From/To headers so names like "Name <email>" display correctly
-        from_name, from_email = parseaddr(self.from_email)
-        if from_email:
-            msg["From"] = formataddr((from_name, from_email))
-        else:
-            msg["From"] = self.from_email
+        msg["From"] = self._format_addr(self.from_email)
 
-        formatted_recipients = []
-        for recipient in self.to_emails:
-            name, email = parseaddr(recipient)
-            if email:
-                formatted_recipients.append(formataddr((name, email)))
+        formatted_recipients = [
+            self._format_addr(recipient) for recipient in self.to_emails if recipient
+        ]
         if formatted_recipients:
             msg["To"] = ", ".join(formatted_recipients)
         else:
@@ -277,6 +270,12 @@ class SeminarEmailNotifier:
         msg.attach(cal_part)
         msg["Content-class"] = "urn:content-classes:calendarmessage"
         return msg
+
+    @staticmethod
+    def _format_addr(addr: str) -> str:
+        name, email = parseaddr(addr or "")
+        email = email or addr
+        return formataddr((name, email)) if email else addr
 
 
     def _send_email(self, msg: EmailMessage):

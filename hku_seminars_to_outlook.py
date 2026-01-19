@@ -54,13 +54,25 @@ def parse_datetime_range(date_str: str, time_range_str: str):
             t = t.replace("am", " am")
         if "pm" in t and " " not in t:
             t = t.replace("pm", " pm")
-        return datetime.strptime(t, "%I:%M %p").time()
+        meridiem = None
+        if " am" in t:
+            meridiem = "am"
+        elif " pm" in t:
+            meridiem = "pm"
+        return datetime.strptime(t, "%I:%M %p").time(), meridiem
 
-    start_time = parse_time(parts[0])
-    end_time = parse_time(parts[1])
+    start_time, start_meridiem = parse_time(parts[0])
+    end_time, end_meridiem = parse_time(parts[1])
 
     start_dt = datetime.combine(date, start_time).replace(tzinfo=HK_TZ)
     end_dt = datetime.combine(date, end_time).replace(tzinfo=HK_TZ)
+    if end_dt <= start_dt:
+        if start_meridiem == "am" and end_meridiem == "am":
+            end_dt = end_dt + timedelta(hours=12)
+        elif start_meridiem == "pm" and end_meridiem == "am":
+            end_dt = end_dt + timedelta(days=1)
+        else:
+            end_dt = end_dt + timedelta(hours=12)
     return start_dt, end_dt
 
 

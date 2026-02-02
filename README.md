@@ -71,6 +71,8 @@ This repository includes a GitHub Actions workflow that automatically runs the s
 
 The workflow file is located at `.github/workflows/seminar-sync.yml`.
 
+**Note**: The workflow commits the state file (`sent_seminars.json`) back to the repository after each run to persist which seminars have been notified. This prevents duplicate notifications in subsequent runs.
+
 ## Notes
 
 - Network access to `https://www.cs.hku.hk/programmes/research-based/mphil-phd-courses-offered` is required.

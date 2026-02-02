@@ -10,7 +10,7 @@ jobs:
   sync-seminars:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     
     steps:
       - name: Checkout repository
@@ -42,10 +42,11 @@ jobs:
         run: |
           python hku_seminars_to_outlook.py
       
-      - name: Upload state file
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: seminar-state
-          path: ${{ secrets.HKU_STATE_FILE != '' && secrets.HKU_STATE_FILE || 'sent_seminars.json' }}
-          retention-days: 90
+      - name: Commit state file changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add ${{ secrets.HKU_STATE_FILE != '' && secrets.HKU_STATE_FILE || 'sent_seminars.json' }}
+          git diff --staged --quiet || git commit -m "Update seminar notification state [skip ci]"
+          git push
+

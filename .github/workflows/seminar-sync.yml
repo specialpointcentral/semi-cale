@@ -7,18 +7,18 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 env:
-  # Configure these values for your deployment
-  # Only HKU_SMTP_PASSWORD should be stored as a secret
-  HKU_SMTP_HOST: smtp.example.com
-  HKU_SMTP_PORT: 587
-  HKU_SMTP_SSL: false
-  HKU_SMTP_STARTTLS: true
-  HKU_SMTP_USER: your-email@example.com
-  HKU_SENDER_EMAIL: Your Name <your-email@example.com>
-  HKU_FROM_EMAIL: Sender Name <your-email@example.com>
-  HKU_TO_EMAILS: recipient@example.com
-  HKU_EMAIL_SUBJECT: ''  # Leave empty to use per-event subject
-  HKU_STATE_FILE: sent_seminars.json
+  # Non-sensitive configuration from GitHub Actions variables
+  # Configure these in Settings → Secrets and variables → Actions → Variables
+  HKU_SMTP_HOST: ${{ vars.HKU_SMTP_HOST }}
+  HKU_SMTP_PORT: ${{ vars.HKU_SMTP_PORT }}
+  HKU_SMTP_SSL: ${{ vars.HKU_SMTP_SSL }}
+  HKU_SMTP_STARTTLS: ${{ vars.HKU_SMTP_STARTTLS }}
+  HKU_SMTP_USER: ${{ vars.HKU_SMTP_USER }}
+  HKU_SENDER_EMAIL: ${{ vars.HKU_SENDER_EMAIL }}
+  HKU_FROM_EMAIL: ${{ vars.HKU_FROM_EMAIL }}
+  HKU_TO_EMAILS: ${{ vars.HKU_TO_EMAILS }}
+  HKU_EMAIL_SUBJECT: ${{ vars.HKU_EMAIL_SUBJECT }}
+  HKU_STATE_FILE: ${{ vars.HKU_STATE_FILE }}
 
 jobs:
   sync-seminars:

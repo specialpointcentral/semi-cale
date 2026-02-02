@@ -6,6 +6,20 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:  # Allow manual trigger
 
+env:
+  # Non-sensitive configuration from GitHub Actions variables
+  # Configure these in Settings → Secrets and variables → Actions → Variables
+  HKU_SMTP_HOST: ${{ vars.HKU_SMTP_HOST }}
+  HKU_SMTP_PORT: ${{ vars.HKU_SMTP_PORT }}
+  HKU_SMTP_SSL: ${{ vars.HKU_SMTP_SSL }}
+  HKU_SMTP_STARTTLS: ${{ vars.HKU_SMTP_STARTTLS }}
+  HKU_SMTP_USER: ${{ vars.HKU_SMTP_USER }}
+  HKU_SENDER_EMAIL: ${{ vars.HKU_SENDER_EMAIL }}
+  HKU_FROM_EMAIL: ${{ vars.HKU_FROM_EMAIL }}
+  HKU_TO_EMAILS: ${{ vars.HKU_TO_EMAILS }}
+  HKU_EMAIL_SUBJECT: ${{ vars.HKU_EMAIL_SUBJECT }}  # Leave empty to use per-event subject
+  HKU_STATE_FILE: ${{ vars.HKU_STATE_FILE || 'sent_seminars.json' }}
+
 jobs:
   sync-seminars:
     runs-on: ubuntu-latest
@@ -28,23 +42,13 @@ jobs:
       
       - name: Run seminar sync
         env:
-          HKU_SMTP_HOST: ${{ secrets.HKU_SMTP_HOST }}
-          HKU_SMTP_PORT: ${{ secrets.HKU_SMTP_PORT }}
-          HKU_SMTP_SSL: ${{ secrets.HKU_SMTP_SSL }}
-          HKU_SMTP_STARTTLS: ${{ secrets.HKU_SMTP_STARTTLS }}
-          HKU_SMTP_USER: ${{ secrets.HKU_SMTP_USER }}
           HKU_SMTP_PASSWORD: ${{ secrets.HKU_SMTP_PASSWORD }}
-          HKU_SENDER_EMAIL: ${{ secrets.HKU_SENDER_EMAIL }}
-          HKU_FROM_EMAIL: ${{ secrets.HKU_FROM_EMAIL }}
-          HKU_TO_EMAILS: ${{ secrets.HKU_TO_EMAILS }}
-          HKU_EMAIL_SUBJECT: ${{ secrets.HKU_EMAIL_SUBJECT }}
-          HKU_STATE_FILE: ${{ secrets.HKU_STATE_FILE }}
         run: |
           python hku_seminars_to_outlook.py
       
       - name: Commit state file changes
         run: |
-          STATE_FILE="${{ secrets.HKU_STATE_FILE != '' && secrets.HKU_STATE_FILE || 'sent_seminars.json' }}"
+          STATE_FILE="${{ env.HKU_STATE_FILE != '' && env.HKU_STATE_FILE || 'sent_seminars.json' }}"
           if [ -f "$STATE_FILE" ]; then
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"

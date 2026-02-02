@@ -89,8 +89,12 @@ class SeminarEmailNotifier:
         Load configuration from environment variables.
         Returns a dict with config values if HKU_SMTP_HOST is set, otherwise returns None.
         
+        Important: HKU_SMTP_HOST is used as the primary indicator to determine whether
+        to load from environment variables. If this variable is not set, the function
+        returns None and the configuration will fall back to reading from config.json.
+        
         Environment variable naming convention:
-        - HKU_SMTP_HOST
+        - HKU_SMTP_HOST (required as indicator)
         - HKU_SMTP_PORT
         - HKU_SMTP_SSL
         - HKU_SMTP_STARTTLS

@@ -76,7 +76,16 @@ class SeminarEmailNotifier:
     
     @staticmethod
     def _parse_bool(value):
-        """Parse boolean from various input types (bool, str, int)."""
+        """
+        Parse boolean from various input types.
+        
+        Args:
+            value: A boolean, string, or other value to convert to boolean.
+                   Strings "true", "1", "yes", "on" (case-insensitive) are True.
+                   
+        Returns:
+            bool: The parsed boolean value.
+        """
         if isinstance(value, bool):
             return value
         if isinstance(value, str):

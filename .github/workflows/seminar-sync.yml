@@ -45,5 +45,5 @@ jobs:
         if: always()
         with:
           name: seminar-state
-          path: ${{ secrets.HKU_STATE_FILE || 'sent_seminars.json' }}
+          path: ${{ secrets.HKU_STATE_FILE != '' && secrets.HKU_STATE_FILE || 'sent_seminars.json' }}
           retention-days: 90

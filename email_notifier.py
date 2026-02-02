@@ -52,6 +52,8 @@ class SeminarEmailNotifier:
         
         to_emails = cfg.get("to_emails", [])
         if isinstance(to_emails, str):
+            # Split comma-separated string from env vars
+            # Supports both plain emails and "Name <email>" format
             to_emails = [e.strip() for e in to_emails.split(",") if e.strip()]
 
         # Handle boolean values from both JSON and string environment variables

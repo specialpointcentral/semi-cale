@@ -16,7 +16,7 @@ This script scrapes the HKU CS research programme seminar table and sends Outloo
    export HKU_SMTP_USER="example@example.com"
    export HKU_SMTP_PASSWORD="your_password"
    export HKU_FROM_EMAIL="Sender <example@example.com>"
-   export HKU_TO_EMAILS="recipient1@example.com,recipient2@example.com"
+   export HKU_TO_EMAILS="Receiver1 <recipient1@example.com>,Receiver2 <recipient2@example.com>"
    # Optional: HKU_SENDER_EMAIL, HKU_EMAIL_SUBJECT, HKU_STATE_FILE
    ```
    
@@ -45,7 +45,7 @@ Configuration can be provided via environment variables (prefixed with `HKU_`) o
 - `smtp_password` / `HKU_SMTP_PASSWORD`: SMTP password (can be an app password)
 - `sender_email` / `HKU_SENDER_EMAIL`: Optional `Sender` header value, e.g. `"HKU CS Seminar Bot <example@example.com>"`. If omitted, falls back to `smtp_user`.
 - `from_email` / `HKU_FROM_EMAIL`: Logical organizer / From address (defaults to `smtp_user` if left blank). Supports `"Name <email>"` format.
-- `to_emails` / `HKU_TO_EMAILS`: Recipients list (array in JSON or comma-separated string in env vars)
+- `to_emails` / `HKU_TO_EMAILS`: Recipients list (array in JSON or comma-separated string in env vars). Supports `"Name <email>"` format for both.
 - `email_subject` / `HKU_EMAIL_SUBJECT`: Optional fixed subject; defaults to "[HKU CS Seminar] …"
 - `state_file` / `HKU_STATE_FILE`: Path to the JSON file used to remember which seminars have been emailed
 

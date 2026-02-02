@@ -7,15 +7,17 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 env:
-  HKU_SMTP_HOST: smtp.gmail.com
+  # Configure these values for your deployment
+  # Only HKU_SMTP_PASSWORD should be stored as a secret
+  HKU_SMTP_HOST: smtp.example.com
   HKU_SMTP_PORT: 587
   HKU_SMTP_SSL: false
   HKU_SMTP_STARTTLS: true
-  HKU_SMTP_USER: your-email@gmail.com
-  HKU_SENDER_EMAIL: Your Name <your-email@gmail.com>
-  HKU_FROM_EMAIL: Your Name <your-email@gmail.com>
+  HKU_SMTP_USER: your-email@example.com
+  HKU_SENDER_EMAIL: Your Name <your-email@example.com>
+  HKU_FROM_EMAIL: Sender Name <your-email@example.com>
   HKU_TO_EMAILS: recipient@example.com
-  HKU_EMAIL_SUBJECT: ''
+  HKU_EMAIL_SUBJECT: ''  # Leave empty to use per-event subject
   HKU_STATE_FILE: sent_seminars.json
 
 jobs:

@@ -6,6 +6,18 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:  # Allow manual trigger
 
+env:
+  HKU_SMTP_HOST: smtp.gmail.com
+  HKU_SMTP_PORT: 587
+  HKU_SMTP_SSL: false
+  HKU_SMTP_STARTTLS: true
+  HKU_SMTP_USER: your-email@gmail.com
+  HKU_SENDER_EMAIL: Your Name <your-email@gmail.com>
+  HKU_FROM_EMAIL: Your Name <your-email@gmail.com>
+  HKU_TO_EMAILS: recipient@example.com
+  HKU_EMAIL_SUBJECT: ''
+  HKU_STATE_FILE: sent_seminars.json
+
 jobs:
   sync-seminars:
     runs-on: ubuntu-latest
@@ -28,23 +40,13 @@ jobs:
       
       - name: Run seminar sync
         env:
-          HKU_SMTP_HOST: ${{ secrets.HKU_SMTP_HOST }}
-          HKU_SMTP_PORT: ${{ secrets.HKU_SMTP_PORT }}
-          HKU_SMTP_SSL: ${{ secrets.HKU_SMTP_SSL }}
-          HKU_SMTP_STARTTLS: ${{ secrets.HKU_SMTP_STARTTLS }}
-          HKU_SMTP_USER: ${{ secrets.HKU_SMTP_USER }}
           HKU_SMTP_PASSWORD: ${{ secrets.HKU_SMTP_PASSWORD }}
-          HKU_SENDER_EMAIL: ${{ secrets.HKU_SENDER_EMAIL }}
-          HKU_FROM_EMAIL: ${{ secrets.HKU_FROM_EMAIL }}
-          HKU_TO_EMAILS: ${{ secrets.HKU_TO_EMAILS }}
-          HKU_EMAIL_SUBJECT: ${{ secrets.HKU_EMAIL_SUBJECT }}
-          HKU_STATE_FILE: ${{ secrets.HKU_STATE_FILE }}
         run: |
           python hku_seminars_to_outlook.py
       
       - name: Commit state file changes
         run: |
-          STATE_FILE="${{ secrets.HKU_STATE_FILE != '' && secrets.HKU_STATE_FILE || 'sent_seminars.json' }}"
+          STATE_FILE="${{ env.HKU_STATE_FILE != '' && env.HKU_STATE_FILE || 'sent_seminars.json' }}"
           if [ -f "$STATE_FILE" ]; then
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"

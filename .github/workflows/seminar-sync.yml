@@ -44,9 +44,14 @@ jobs:
       
       - name: Commit state file changes
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add ${{ secrets.HKU_STATE_FILE != '' && secrets.HKU_STATE_FILE || 'sent_seminars.json' }}
-          git diff --staged --quiet || git commit -m "Update seminar notification state [skip ci]"
-          git push
+          STATE_FILE="${{ secrets.HKU_STATE_FILE != '' && secrets.HKU_STATE_FILE || 'sent_seminars.json' }}"
+          if [ -f "$STATE_FILE" ]; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add "$STATE_FILE"
+            if ! git diff --staged --quiet; then
+              git commit -m "Update seminar notification state [skip ci]"
+              git push
+            fi
+          fi
 

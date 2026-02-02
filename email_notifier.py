@@ -42,14 +42,21 @@ class SeminarEmailNotifier:
 
     @classmethod
     def from_config_file(cls, path: str, tz, source_url: str, subject_prefix: str):
-        with open(path, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
+        # First try to load from environment variables
+        cfg = cls._load_from_env()
+        
+        # If environment variables are not set, fall back to config file
+        if not cfg:
+            with open(path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        
         to_emails = cfg.get("to_emails", [])
         if isinstance(to_emails, str):
             to_emails = [e.strip() for e in to_emails.split(",") if e.strip()]
 
-        starttls_cfg = bool(cfg.get("smtp_starttls", True))
-        use_ssl_cfg = bool(cfg.get("smtp_ssl", False))
+        # Handle boolean values from both JSON and string environment variables
+        starttls_cfg = cls._parse_bool(cfg.get("smtp_starttls", True))
+        use_ssl_cfg = cls._parse_bool(cfg.get("smtp_ssl", False))
         return cls(
             smtp_host=cfg.get("smtp_host", ""),
             smtp_port=int(cfg.get("smtp_port", 587)),
@@ -66,6 +73,55 @@ class SeminarEmailNotifier:
             source_url=source_url,
             subject_prefix=subject_prefix,
         )
+    
+    @staticmethod
+    def _parse_bool(value):
+        """Parse boolean from various input types (bool, str, int)."""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in ("true", "1", "yes", "on")
+        return bool(value)
+    
+    @staticmethod
+    def _load_from_env():
+        """
+        Load configuration from environment variables.
+        Returns a dict with config values if HKU_SMTP_HOST is set, otherwise returns None.
+        
+        Environment variable naming convention:
+        - HKU_SMTP_HOST
+        - HKU_SMTP_PORT
+        - HKU_SMTP_SSL
+        - HKU_SMTP_STARTTLS
+        - HKU_SMTP_USER
+        - HKU_SMTP_PASSWORD
+        - HKU_SENDER_EMAIL
+        - HKU_FROM_EMAIL
+        - HKU_TO_EMAILS (comma-separated list)
+        - HKU_EMAIL_SUBJECT
+        - HKU_STATE_FILE
+        """
+        # Check if primary env var is set (use smtp_host as the indicator)
+        if not os.environ.get("HKU_SMTP_HOST"):
+            return None
+        
+        # Build config from environment variables
+        cfg = {
+            "smtp_host": os.environ.get("HKU_SMTP_HOST", ""),
+            "smtp_port": os.environ.get("HKU_SMTP_PORT", "587"),
+            "smtp_ssl": os.environ.get("HKU_SMTP_SSL", "false"),
+            "smtp_starttls": os.environ.get("HKU_SMTP_STARTTLS", "true"),
+            "smtp_user": os.environ.get("HKU_SMTP_USER", ""),
+            "smtp_password": os.environ.get("HKU_SMTP_PASSWORD", ""),
+            "sender_email": os.environ.get("HKU_SENDER_EMAIL", ""),
+            "from_email": os.environ.get("HKU_FROM_EMAIL", ""),
+            "to_emails": os.environ.get("HKU_TO_EMAILS", ""),
+            "email_subject": os.environ.get("HKU_EMAIL_SUBJECT", ""),
+            "state_file": os.environ.get("HKU_STATE_FILE", "sent_seminars.json"),
+        }
+        
+        return cfg
 
     def ensure_ready(self):
         if not self.smtp_host:

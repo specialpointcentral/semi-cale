@@ -1,0 +1,49 @@
+name: HKU Seminar Sync
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: '0 * * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync-seminars:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run seminar sync
+        env:
+          HKU_SMTP_HOST: ${{ secrets.HKU_SMTP_HOST }}
+          HKU_SMTP_PORT: ${{ secrets.HKU_SMTP_PORT }}
+          HKU_SMTP_SSL: ${{ secrets.HKU_SMTP_SSL }}
+          HKU_SMTP_STARTTLS: ${{ secrets.HKU_SMTP_STARTTLS }}
+          HKU_SMTP_USER: ${{ secrets.HKU_SMTP_USER }}
+          HKU_SMTP_PASSWORD: ${{ secrets.HKU_SMTP_PASSWORD }}
+          HKU_SENDER_EMAIL: ${{ secrets.HKU_SENDER_EMAIL }}
+          HKU_FROM_EMAIL: ${{ secrets.HKU_FROM_EMAIL }}
+          HKU_TO_EMAILS: ${{ secrets.HKU_TO_EMAILS }}
+          HKU_EMAIL_SUBJECT: ${{ secrets.HKU_EMAIL_SUBJECT }}
+          HKU_STATE_FILE: ${{ secrets.HKU_STATE_FILE }}
+        run: |
+          python hku_seminars_to_outlook.py
+      
+      - name: Upload state file
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seminar-state
+          path: sent_seminars.json
+          retention-days: 90

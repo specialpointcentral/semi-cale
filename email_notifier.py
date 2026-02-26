@@ -350,6 +350,12 @@ class SeminarEmailNotifier:
 
 
     def _send_email(self, msg: EmailMessage):
+        to_header = msg.get("To", "")
+        recipients = [addr.strip() for addr in to_header.split(",") if addr.strip()]
+        print(f"About to send email to: {to_header}")
+        if recipients:
+            print(f"Recipient list ({len(recipients)}): {recipients}")
+
         smtp_class = smtplib.SMTP_SSL if self.use_ssl else smtplib.SMTP
         with smtp_class(self.smtp_host, self.smtp_port) as smtp:
             if self.use_starttls and not self.use_ssl:

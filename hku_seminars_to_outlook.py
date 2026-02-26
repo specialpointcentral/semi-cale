@@ -22,6 +22,11 @@ HK_TZ = ZoneInfo("Asia/Hong_Kong")
 HKU_SEMINAR_URL = "https://www.cs.hku.hk/programmes/research-based/mphil-phd-courses-offered"
 SUBJECT_PREFIX = "[HKU CS Seminar] "
 
+MIN_SEMINAR_DURATION = timedelta(minutes=20)
+MAX_SEMINAR_DURATION = timedelta(hours=4)
+SUSPICIOUS_LONG_DURATION = timedelta(hours=6)
+NOON_AMBIGUOUS_HOURS = {11, 12}
+
 
 def parse_datetime_range(date_str: str, time_range_str: str):
     """
@@ -59,10 +64,12 @@ def parse_datetime_range(date_str: str, time_range_str: str):
             meridiem = "am"
         elif " pm" in t:
             meridiem = "pm"
-        return datetime.strptime(t, "%I:%M %p").time(), meridiem
+        parsed_time = datetime.strptime(t, "%I:%M %p").time()
+        hour12 = parsed_time.hour % 12 or 12
+        return parsed_time, meridiem, hour12
 
-    start_time, start_meridiem = parse_time(parts[0])
-    end_time, end_meridiem = parse_time(parts[1])
+    start_time, start_meridiem, _start_hour12 = parse_time(parts[0])
+    end_time, end_meridiem, end_hour12 = parse_time(parts[1])
 
     start_dt = datetime.combine(date, start_time).replace(tzinfo=HK_TZ)
     end_dt = datetime.combine(date, end_time).replace(tzinfo=HK_TZ)
@@ -73,6 +80,34 @@ def parse_datetime_range(date_str: str, time_range_str: str):
             end_dt = end_dt + timedelta(days=1)
         else:
             end_dt = end_dt + timedelta(hours=12)
+
+    duration = end_dt - start_dt
+
+    # 中午附近 AM/PM 常被误填：例如 10:30 am - 11:30 pm（实际应为 11:30 am）。
+    # 仅在“am -> pm 且时长异常长”的保守条件下尝试将结束时间回退 12 小时。
+    if (
+        start_meridiem == "am"
+        and end_meridiem == "pm"
+        and end_hour12 in NOON_AMBIGUOUS_HOURS
+        and duration >= SUSPICIOUS_LONG_DURATION
+    ):
+        candidate_end_dt = end_dt - timedelta(hours=12)
+        candidate_duration = candidate_end_dt - start_dt
+        if (
+            MIN_SEMINAR_DURATION <= candidate_duration <= MAX_SEMINAR_DURATION
+            and candidate_end_dt > start_dt
+        ):
+            print(
+                "Warning: corrected suspicious AM/PM typo "
+                f"from '{time_range_str}' to duration "
+                f"{int(candidate_duration.total_seconds() // 60)} minutes."
+            )
+            end_dt = candidate_end_dt
+        else:
+            print(
+                "Warning: suspicious long seminar duration "
+                f"({duration}) for '{time_range_str}', kept original parsing."
+            )
     return start_dt, end_dt
 
 

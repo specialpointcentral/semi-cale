@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from datetime import datetime, timedelta
 from urllib.parse import urljoin
@@ -165,12 +166,20 @@ def fetch_seminars():
         # Speaker
         speaker = tds[1].get_text(strip=True)
 
-        # Date and time 列：第一行是日期，第二行是时间范围
+        # Date and time 列：日期和时间范围可能在同一字符串或分两行出现
         date_time_parts = list(tds[2].stripped_strings)
         if not date_time_parts:
             continue
-        date_str = date_time_parts[0]
-        time_range_str = date_time_parts[1] if len(date_time_parts) > 1 else ""
+        # Support both "Month DD, YYYY\nHH:MM am - HH:MM am" (separate nodes)
+        # and "Month DD, YYYY HH:MM am - HH:MM am" (single combined node).
+        combined = " ".join(date_time_parts)
+        date_match = re.match(r"^([A-Za-z]+ \d{1,2},\s*\d{4})(.*)", combined)
+        if date_match:
+            date_str = date_match.group(1).strip()
+            time_range_str = date_match.group(2).strip()
+        else:
+            date_str = date_time_parts[0]
+            time_range_str = date_time_parts[1] if len(date_time_parts) > 1 else ""
 
         start_dt, end_dt = parse_datetime_range(date_str, time_range_str)
 

@@ -173,11 +173,15 @@ def fetch_seminars():
         # Support both "Month DD, YYYY\nHH:MM am - HH:MM am" (separate nodes)
         # and "Month DD, YYYY HH:MM am - HH:MM am" (single combined node).
         combined = " ".join(date_time_parts)
-        date_match = re.match(r"^([A-Za-z]+ \d{1,2},\s*\d{4})(.*)", combined)
+        date_match = re.match(r"^([A-Za-z]+\s+\d{1,2},\s*\d{4})(.*)", combined)
         if date_match:
             date_str = date_match.group(1).strip()
             time_range_str = date_match.group(2).strip()
         else:
+            print(
+                f"Warning: unexpected date/time format in cell, "
+                f"falling back to index-based parsing: {combined!r}"
+            )
             date_str = date_time_parts[0]
             time_range_str = date_time_parts[1] if len(date_time_parts) > 1 else ""
 

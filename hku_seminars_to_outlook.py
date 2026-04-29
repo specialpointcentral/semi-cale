@@ -46,12 +46,16 @@ def parse_datetime_range(date_str: str, time_range_str: str):
         end_dt = start_dt + timedelta(hours=1)
         return start_dt, end_dt
 
-    parts = time_range_str.split("-")
+    # The site is not fully consistent: examples seen include
+    # "4:00 pm - 5 pm" (end time has no minutes) and sometimes typographic dashes.
+    parts = re.split(r"\s*[-–—]\s*", time_range_str, maxsplit=1)
     if len(parts) != 2:
         raise ValueError(f"Unexpected time range format: {time_range_str}")
 
     def parse_time(t: str):
         t = t.strip().lower()
+        # Normalize "p.m."/"a.m." variants before further processing.
+        t = re.sub(r"([ap])\.?\s*m\.?", r"\1m", t)
         # "12:00 nn" 处理成 12:00 pm
         t = t.replace("nn", "pm")
         t = t.replace(" noon", " pm")
@@ -65,7 +69,14 @@ def parse_datetime_range(date_str: str, time_range_str: str):
             meridiem = "am"
         elif " pm" in t:
             meridiem = "pm"
-        parsed_time = datetime.strptime(t, "%I:%M %p").time()
+        for time_format in ("%I:%M %p", "%I %p"):
+            try:
+                parsed_time = datetime.strptime(t, time_format).time()
+                break
+            except ValueError:
+                pass
+        else:
+            raise ValueError(f"Unexpected time format: {t!r} in range {time_range_str!r}")
         hour12 = parsed_time.hour % 12 or 12
         return parsed_time, meridiem, hour12
 

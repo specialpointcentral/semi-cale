@@ -1,5 +1,7 @@
 [
+  "3D Visual Character Motion Generation, Reconstruction, and Embodied Agents|Prof. Li Cheng|2026-06-16T10:00:00+08:00",
   "A Billion Medical Devices.|Prof. Mayank Goel|2026-03-06T10:30:00+08:00",
+  "A General Framework For Multiple Testing Via E-Value Aggregation And Data-Dependent Weighting|Dr. Guanxun Li|2026-06-12T14:00:00+08:00",
   "AI + Data: A Match Made in Heaven?|Prof. C. Mohan|2026-04-22T13:00:00+08:00",
   "Accommodating Comprehensive Foundation Model Services over Heterogeneous Computational Resources|Prof. Binhang Yuan|2026-03-23T14:00:00+08:00",
   "Advancing Exploration in Reinforcement Learning|Prof. Leong Hou U|2026-04-10T14:00:00+08:00",
@@ -17,10 +19,14 @@
   "Guiding with Search: Memory-Aware Abstraction for Scalable Vulnerability Detection|Prof. Heqing Huang|2026-02-27T10:30:00+08:00",
   "Modeling, Understanding, and Interacting with the 3D World|Prof. Mengyu Wang|2026-06-18T14:30:00+08:00",
   "Non-Asymptotic Bounds for Forward Processes in Denoising Diffusions: Ornstein-Uhlenbeck is Hard to Beat|Prof. Aleksandar Mijatović|2026-06-12T11:00:00+08:00",
+  "Optimal Time To Sell A Stock In The Presence Of Gap, Default And Volatility Risks|Prof. Aleksandar Mijatovic|2026-06-11T16:00:00+08:00",
   "Quantum Recursive Programming: Abstraction, Verification, and Implementation|Dr. Zhicheng Zhang|2026-03-20T10:00:00+08:00",
   "Rethinking Software Root Cause Analysis with LLM Agents|Prof. Pinjia He|2026-04-17T22:30:00+08:00",
+  "Semiparametric Distribution Learning Via Quantile Regression|Prof. Huixia Judy Wang|2026-06-10T16:00:00+08:00",
   "Stochastic models based on Hawkes and marked Hawkes processes and their applications in insurance|Prof. Anatoliy Swishchuk|2026-06-03T11:00:00+08:00",
+  "Subsystem Quantum Error Correction for Noisy Quantum Metrology|Dr. Qiushi Liu|2026-07-03T10:30:00+08:00",
   "Toward Real-World Autonomous Learning: Adaptive Control, Safe Planning, and On-Device Foundation Models|Dr. Ma Hao|2026-05-21T14:00:00+08:00",
+  "Towards Dependable Systems for Privacy-Enhancing Technologies|Dr. Dongwei Xiao|2026-06-12T10:00:00+08:00",
   "Towards Trustworthy Medical Intelligence|Dr. Huazhu Fu|2026-05-15T10:30:00+08:00",
   "Using Optimal Transport To Mitigate Unfair Predictions and Quantify Counterfactual Fairness|Prof. Arthur Charpentier|2026-04-10T11:00:00+08:00",
   "When Quantum Causal Structures Diverge from their Classical Counterparts|Dr. Elie Wolfe|2026-04-29T11:00:00+08:00"

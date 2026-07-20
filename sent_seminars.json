@@ -11,6 +11,7 @@
   "Building Efficient and Scalable Machine Learning Systems|Dr. Qinghao Hu|2026-04-10T10:00:00+08:00",
   "Causal Generalist Medical AI|Dr. Hongtu Zhu|2026-06-16T11:00:00+08:00",
   "Choosing the right stochastic block model|Dr. Max Jerdee|2026-05-07T16:00:00+08:00",
+  "Consensus and Random Walks on “Higher-order Networks|Prof. Renaud Lambiotte|2026-08-06T10:30:00+08:00",
   "Consensus and Random Walks on “Higher-order Networks”|Prof. Renaud Lambiotte|2026-08-06T10:30:00+08:00",
   "Differentially private one-shot model-free screening with FDR control|Prof. Linglong Kong|2026-06-15T16:00:00+08:00",
   "Direct Likelihood Approach for Interval-Censored Competing Risks with Missing Failure Causes|Professor Liming Xiang|2026-06-30T10:30:00+08:00",
@@ -32,12 +33,14 @@
   "Quantum Recursive Programming: Abstraction, Verification, and Implementation|Dr. Zhicheng Zhang|2026-03-20T10:00:00+08:00",
   "Rethinking Software Root Cause Analysis with LLM Agents|Prof. Pinjia He|2026-04-17T22:30:00+08:00",
   "Semiparametric Distribution Learning Via Quantile Regression|Prof. Huixia Judy Wang|2026-06-10T16:00:00+08:00",
+  "Statistical Estimation and Inference in High-Dimensional and Semiparametric Models|Dr. Yuanhang Luo|2026-08-03T10:30:00+08:00",
   "Stochastic models based on Hawkes and marked Hawkes processes and their applications in insurance|Prof. Anatoliy Swishchuk|2026-06-03T11:00:00+08:00",
   "Subsystem Quantum Error Correction for Noisy Quantum Metrology|Dr. Qiushi Liu|2026-07-03T02:30:00+08:00",
   "Subsystem Quantum Error Correction for Noisy Quantum Metrology|Dr. Qiushi Liu|2026-07-03T10:30:00+08:00",
   "Toward Real-World Autonomous Learning: Adaptive Control, Safe Planning, and On-Device Foundation Models|Dr. Ma Hao|2026-05-21T14:00:00+08:00",
   "Towards Dependable Systems for Privacy-Enhancing Technologies|Dr. Dongwei Xiao|2026-06-12T10:00:00+08:00",
   "Towards Trustworthy Medical Intelligence|Dr. Huazhu Fu|2026-05-15T10:30:00+08:00",
+  "Understanding Transformers through the Lens of Logic and Automata|Prof. Anthony Lin|2026-08-21T10:30:00+08:00",
   "Using Optimal Transport To Mitigate Unfair Predictions and Quantify Counterfactual Fairness|Prof. Arthur Charpentier|2026-04-10T11:00:00+08:00",
   "When Quantum Causal Structures Diverge from their Classical Counterparts|Dr. Elie Wolfe|2026-04-29T11:00:00+08:00"
 ]
